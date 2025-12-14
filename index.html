@@ -16,6 +16,8 @@
         --nes-white: #ffffff;
         --nes-red: #ff0000;
         --nes-blue: #2c3e50;
+        --nes-gold: #eebb55; /* Wild Gunman Gold */
+        --nes-menu-blue: #66ccff; /* Wild Gunman Menu Blue */
       }
 
       body {
@@ -44,6 +46,32 @@
         height: 80vh;
         aspect-ratio: 4/3;
         max-width: 95vw;
+        transition: transform 0.1s; /* För screen shake */
+      }
+
+      /* Screen shake klass */
+      .shake {
+        animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+      }
+
+      @keyframes shake {
+        10%,
+        90% {
+          transform: translate3d(-4px, 0, 0);
+        }
+        20%,
+        80% {
+          transform: translate3d(6px, 0, 0);
+        }
+        30%,
+        50%,
+        70% {
+          transform: translate3d(-8px, 0, 0);
+        }
+        40%,
+        60% {
+          transform: translate3d(8px, 0, 0);
+        }
       }
 
       canvas {
@@ -266,6 +294,16 @@
         box-sizing: border-box;
       }
 
+      /* Top Score style - Matchar Wild Gunman */
+      #start-top-score {
+        color: #ffffff; /* Vit text som i originalet */
+        font-size: 2.2vh;
+        margin-top: 5vh; /* Lite mer avstånd från menyn */
+        margin-bottom: 2vh;
+        text-shadow: 2px 2px #000;
+        text-transform: uppercase;
+      }
+
       h1 {
         color: #eebb55;
         font-size: 3.5vh; /* Responsiv textstorlek */
@@ -293,10 +331,10 @@
       }
 
       .menu-item {
-        font-size: 2.2vh; /* Lite mindre för att få plats på små skärmar */
-        color: #fff;
+        font-size: 2.2vh;
+        color: var(--nes-menu-blue); /* Wild Gunman ljusblå */
         margin-bottom: 2vh;
-        padding: 10px; /* Gör klickytan större */
+        padding: 10px;
         cursor: pointer;
         text-shadow: 2px 2px #000;
         display: flex;
@@ -304,20 +342,20 @@
         justify-content: flex-start;
         gap: 10px;
         text-decoration: none;
-        user-select: none; /* Förhindra textmarkering vid snabba klick */
+        user-select: none;
       }
 
       .menu-item.selected {
-        color: #f1c40f;
+        color: #ffffff; /* Vit när vald (eller gul om man vill) */
       }
 
       .copyright {
         position: absolute;
-        bottom: 20px; /* Ändrat från % till fasta pixlar för bättre placering */
-        width: 100%; /* Säkerställ att den centreras */
+        bottom: 20px;
+        width: 100%;
         text-align: center;
-        color: #fff;
-        font-size: 10px; /* Fast storlek för läsbarhet */
+        color: var(--nes-gold); /* Guld/Beige som i Wild Gunman */
+        font-size: 10px;
         text-shadow: 2px 2px #000;
       }
 
@@ -376,6 +414,11 @@
           opacity: 0;
         }
       }
+
+      #high-score-display {
+        color: #f1c40f;
+        text-shadow: 1px 1px 0 #000;
+      }
     </style>
   </head>
   <body>
@@ -385,10 +428,12 @@
 
       <div id="ui-layer">
         <div id="score-display">POÄNG: 0</div>
+        <div id="high-score-display">HI: 0</div>
         <div id="lives-display">LIV: VHS VHS VHS</div>
       </div>
 
       <div id="start-screen">
+        <!-- Tog bort Top Score härifrån toppen -->
         <h1>
           <span class="title-netflix">NETFLIX KILLED</span><br />
           <span class="title-blockbuster">THE VIDEOSTORE</span>
@@ -415,6 +460,9 @@
             GAME B (HARD)
           </div>
         </div>
+
+        <!-- Flyttade Top Score hit -->
+        <div id="start-top-score">TOP SCORE - 0</div>
 
         <div class="copyright">&copy;1984 VIDEOSTORE</div>
       </div>
@@ -446,9 +494,12 @@
       const ctx = canvas.getContext("2d");
       const scoreEl = document.getElementById("score-display");
       const livesEl = document.getElementById("lives-display");
+      const highScoreEl = document.getElementById("high-score-display");
+      const startTopScoreEl = document.getElementById("start-top-score");
       const startScreen = document.getElementById("start-screen");
       const gameOverScreen = document.getElementById("game-over-screen");
       const finalScoreEl = document.getElementById("final-score");
+      const gameContainer = document.getElementById("game-container");
 
       // Koppla globala funktioner till window för att undvika scope-problem
       window.selectMenu = function (element) {
@@ -467,12 +518,17 @@
       let gameLoopId;
       let frameCount = 0;
       let score = 0;
+      let highScore = localStorage.getItem("vhs_highscore") || 0;
       let lives = 3;
       let isGameOver = false;
       let gameSpeed = 1;
       let difficultyMultiplier = 1;
       let baseDifficulty = 1;
       let gameOverTimeout; // Variabel för timern
+
+      // Combo system
+      let comboCount = 0;
+      let lastHitTime = 0;
 
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       const audioCtx = new AudioContext();
@@ -489,6 +545,10 @@
       let tapes = [];
       let particles = [];
       let scoreFloaters = []; // NYTT: Flytande poängtexter
+
+      // Visa highscore direkt vid start både i UI och på startskärmen
+      highScoreEl.innerText = "HI: " + highScore;
+      startTopScoreEl.innerText = "TOP SCORE - " + highScore;
 
       // Enkla sprites
       function drawSprite(ctx, type, x, y, options = {}) {
@@ -692,9 +752,11 @@
           osc.stop(audioCtx.currentTime + 0.1);
         } else if (type === "hit") {
           osc.type = "sawtooth";
-          osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+          // Högre pitch om combo är hög
+          const pitch = 200 + comboCount * 50;
+          osc.frequency.setValueAtTime(pitch, audioCtx.currentTime);
           osc.frequency.linearRampToValueAtTime(
-            600,
+            pitch + 400,
             audioCtx.currentTime + 0.1
           );
           gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
@@ -708,6 +770,14 @@
           osc.start();
           osc.stop(audioCtx.currentTime + 0.3);
         }
+      }
+
+      // Screen Shake Funktion
+      function shakeScreen() {
+        gameContainer.classList.add("shake");
+        setTimeout(() => {
+          gameContainer.classList.remove("shake");
+        }, 500);
       }
 
       function spawnCustomer() {
@@ -749,6 +819,11 @@
           spawnCustomer();
         }
 
+        // Återställ combo om det går för lång tid
+        if (Date.now() - lastHitTime > 2000) {
+          comboCount = 0;
+        }
+
         // SPELAR-RÖRELSE (Interpolering)
         // Flytta visualLane mjukt mot lane
         const speed = 0.2; // Hur snabbt han springer mellan raderna
@@ -772,6 +847,8 @@
           if (t.x < 10) {
             tapes.splice(i, 1);
             lives--;
+            comboCount = 0; // Reset combo vid miss
+            shakeScreen(); // Skaka skärmen vid miss
             playSound("crash");
             createExplosion(20, LANE_START_Y + t.lane * LANE_HEIGHT + 40);
             checkGameOver();
@@ -797,6 +874,7 @@
 
           if (c.x > TAP_X - 20) {
             lives = 0;
+            shakeScreen(); // Skaka skärmen vid game over
             checkGameOver();
           }
         }
@@ -818,8 +896,22 @@
 
                   c.pushedBack = c.x + 100;
 
-                  score += 10;
-                  spawnScore(c.x, LANE_START_Y + c.lane * LANE_HEIGHT, "10"); // Visa poäng
+                  // Combo Logic
+                  comboCount++;
+                  lastHitTime = Date.now();
+                  let comboBonus = comboCount > 1 ? comboCount * 10 : 0;
+
+                  score += 10 + comboBonus;
+
+                  let scoreText = "10";
+                  if (comboBonus > 0)
+                    scoreText += " +" + comboBonus + " COMBO!";
+
+                  spawnScore(
+                    c.x,
+                    LANE_START_Y + c.lane * LANE_HEIGHT,
+                    scoreText
+                  );
                   createExplosion(
                     c.x,
                     LANE_START_Y + c.lane * LANE_HEIGHT + 40
@@ -954,6 +1046,13 @@
         if (lives <= 0) {
           isGameOver = true;
           lives = 0;
+
+          // Uppdatera High Score
+          if (score > highScore) {
+            highScore = score;
+            localStorage.setItem("vhs_highscore", highScore);
+          }
+
           updateUI();
           finalScoreEl.innerText = "SLUTPOÄNG: " + score;
           gameOverScreen.style.display = "flex";
@@ -967,6 +1066,7 @@
 
       function updateUI() {
         scoreEl.innerText = "POÄNG: " + score;
+        highScoreEl.innerText = "HI: " + highScore;
         let heartStr = "";
         for (let i = 0; i < lives; i++) heartStr += " [VHS]";
         livesEl.innerText = "LIV:" + heartStr;
@@ -1026,11 +1126,14 @@
 
         gameOverScreen.style.display = "none";
         startScreen.style.display = "flex";
+        // Uppdatera high score visning på menyn också om man vill
+        startTopScoreEl.innerText = "TOP SCORE - " + highScore;
       };
 
       function resetGameVars() {
         score = 0;
         lives = 3;
+        comboCount = 0;
         isGameOver = false;
         customers = [];
         tapes = [];
