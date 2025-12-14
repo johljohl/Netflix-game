@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="sv">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Netflix Killed the Videostore</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+
+      :root {
+        --bg-color: #000000;
+        --nes-black: #000000;
+        --nes-white: #ffffff;
+        --nes-red: #ff0000;
+        --nes-blue: #2c3e50;
+      }
+
+      body {
+        background-color: var(--bg-color);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        color: var(--nes-white);
+        font-family: "Press Start 2P", cursive;
+        overflow: hidden;
+        touch-action: none;
+      }
+
+      #game-container {
+        position: relative;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+        border: none;
+        height: 80vh;
+        width: calc(80vh * (4 / 3));
+        max-width: 95vw;
+      }
+
+      @media (max-aspect-ratio: 4/3) {
+        #game-container {
+          width: 95vw;
+          height: calc(95vw * (3 / 4));
+        }
+      }
+
+      canvas {
+        display: block;
+        image-rendering: pixelated;
+        background-color: var(--nes-black);
+        width: 100%;
+        height: 100%;
+      }
+
+      .scanlines {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0),
+          rgba(255, 255, 255, 0) 50%,
+          rgba(0, 0, 0, 0.1) 50%,
+          rgba(0, 0, 0, 0.1)
+        );
+        background-size: 100% 4px;
+        pointer-events: none;
+        z-index: 10;
+        /* Minskade vinjetten något för tydlighet */
+        box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
+      }
+
+      #ui-layer {
+        position: absolute;
+        top: 10px;
+        left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        padding: 0 20px;
+        box-sizing: border-box;
+        z-index: 20;
+        text-shadow: 2px 2px #000;
+        font-size: 14px;
+      }
+
+      /* Mobile Controls */
+      #controls {
+        display: none;
+        width: 100%;
+        max-width: 600px;
+        margin-top: 20px;
+        justify-content: space-between;
+        padding: 0 20px;
+        box-sizing: border-box;
+      }
+
+      .d-pad {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .btn {
+        background: #555;
+        border: 2px solid #fff;
+        color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 12px;
+        user-select: none;
+        text-align: center;
+        box-shadow: 0 4px 0 #222;
+      }
+
+      .btn:active {
+        box-shadow: 0 0 0 #222;
+        transform: translateY(4px);
+      }
+
+      .btn-action {
+        background: #e74c3c;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #start-screen,
+      #game-over-screen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding-top: 15vh;
+        z-index: 30;
+        text-align: center;
+        box-sizing: border-box;
+      }
+
+      h1 {
+        color: #eebb55;
+        font-size: 40px;
+        line-height: 1.4;
+        margin-bottom: 50px;
+        text-shadow: 4px 4px 0px #8b4513, 6px 6px 0px #000;
+        text-transform: uppercase;
+      }
+
+      @media (max-width: 600px) {
+        h1 {
+          font-size: 22px;
+        }
+        #start-screen {
+          padding-top: 20vh;
+        }
+      }
+
+      .title-netflix {
+        color: #e50914 !important;
+        text-shadow: 3px 3px 0px #500000, 5px 5px 0px #000 !important;
+      }
+
+      .title-blockbuster {
+        color: #eebb55 !important;
+        text-shadow: 3px 3px 0px #003399, 5px 5px 0px #000 !important;
+      }
+
+      #menu-container {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .menu-item {
+        font-size: 16px;
+        color: #fff;
+        margin-bottom: 20px;
+        cursor: pointer;
+        text-shadow: 2px 2px #000;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 10px;
+        text-decoration: none;
+      }
+
+      .menu-item.selected {
+        color: #f1c40f;
+      }
+
+      .copyright {
+        position: absolute;
+        bottom: 40px;
+        color: #fff;
+        font-size: 12px;
+        text-shadow: 2px 2px #000;
+      }
+
+      .cursor-icon {
+        width: 20px;
+        height: 12px;
+        display: inline-block;
+        position: relative;
+        margin-right: 10px;
+        visibility: hidden;
+        background: #333;
+        border: 1px solid #fff;
+      }
+
+      .menu-item.selected .cursor-icon {
+        visibility: visible;
+      }
+
+      .cursor-icon::after,
+      .cursor-icon::before {
+        content: "";
+        position: absolute;
+        background: #fff;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+      }
+      .cursor-icon::after {
+        top: 2px;
+        left: 2px;
+      }
+      .cursor-icon::before {
+        top: 2px;
+        right: 2px;
+      }
+
+      p {
+        font-size: 12px;
+        color: #ccc;
+        line-height: 1.8;
+        margin-bottom: 30px;
+        max-width: 80%;
+      }
+
+      .blink {
+        animation: blinker 1s linear infinite;
+        color: #f1c40f;
+        cursor: pointer;
+      }
+
+      @keyframes blinker {
+        50% {
+          opacity: 0;
+        }
+      }
+
+      @media (max-width: 800px) {
+        #controls {
+          display: flex;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <canvas id="gameCanvas" width="640" height="480"></canvas>
+      <div class="scanlines"></div>
+
+      <div id="ui-layer">
+        <div id="score-display">POÄNG: 0</div>
+        <div id="lives-display">LIV: VHS VHS VHS</div>
+      </div>
+
+      <div id="start-screen">
+        <h1>
+          <span class="title-netflix">NETFLIX KILLED</span><br />
+          <span class="title-blockbuster">THE VIDEOSTORE</span>
+        </h1>
+
+        <div id="menu-container">
+          <div
+            class="menu-item selected"
+            onclick="startGame('normal')"
+            onmouseenter="selectMenu(this)"
+          >
+            <div class="cursor-icon"></div>
+            GAME A (NORMAL)
+          </div>
+          <div
+            class="menu-item"
+            onclick="startGame('hard')"
+            onmouseenter="selectMenu(this)"
+          >
+            <div class="cursor-icon"></div>
+            GAME B (HARD)
+          </div>
+        </div>
+
+        <div class="copyright">&copy;1984 VIDEOSTORE</div>
+      </div>
+
+      <div id="game-over-screen" style="display: none">
+        <h1 style="color: #888">BUTIKEN STÄNGD</h1>
+        <p id="final-score">SLUTPOÄNG: 0</p>
+        <p style="color: #e74c3c">STREAMING TOG ÖVER...</p>
+        <div class="blink" onclick="goToTitle()">TILL TITELSKÄRM</div>
+      </div>
+    </div>
+
+    <div id="controls">
+      <div class="d-pad">
+        <div class="btn" id="btn-up">UPP</div>
+        <div class="btn" id="btn-down">NER</div>
+      </div>
+      <div class="btn btn-action" id="btn-throw">VHS</div>
+    </div>
+
+    <script>
+      /**
+       * SPELMOTOR & LOGIK
+       */
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+      const scoreEl = document.getElementById("score-display");
+      const livesEl = document.getElementById("lives-display");
+      const startScreen = document.getElementById("start-screen");
+      const gameOverScreen = document.getElementById("game-over-screen");
+      const finalScoreEl = document.getElementById("final-score");
+
+      // Koppla globala funktioner till window för att undvika scope-problem
+      window.selectMenu = function (element) {
+        document
+          .querySelectorAll(".menu-item")
+          .forEach((el) => el.classList.remove("selected"));
+        element.classList.add("selected");
+      };
+
+      const LANES = 4;
+      const LANE_HEIGHT = 85; // Lite tajtare mellan raderna
+      const LANE_START_Y = 130; // Flyttade NER allt för att ge plats åt skylten (var 100)
+      const PLAYER_X = 550;
+      const TAP_X = 510;
+
+      let gameLoopId;
+      let frameCount = 0;
+      let score = 0;
+      let lives = 3;
+      let isGameOver = false;
+      let gameSpeed = 1;
+      let difficultyMultiplier = 1;
+      let baseDifficulty = 1;
+      let gameOverTimeout; // Variabel för timern
+
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const audioCtx = new AudioContext();
+
+      let player = {
+        lane: 1, // Nuvarande logiska lane
+        visualLane: 1, // För animering (float)
+        cooldown: 0,
+        throwAnim: 0,
+        isMoving: false, // Håller koll på om vi springer
+      };
+
+      let customers = [];
+      let tapes = [];
+      let particles = [];
+      let scoreFloaters = []; // NYTT: Flytande poängtexter
+
+      // Enkla sprites
+      function drawSprite(ctx, type, x, y, options = {}) {
+        const p = 4;
+
+        if (type === "player") {
+          // SKUGGA (Nytt: Fäster spelaren vid golvet)
+          ctx.fillStyle = "rgba(0,0,0,0.5)";
+          ctx.beginPath();
+          ctx.ellipse(x + p * 4, y + p * 3, p * 6, p * 2, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // --- BITRÄDET (CLERK) ---
+          const isMoving = options.isMoving;
+          const runAnim = Math.floor(Date.now() / 100) % 2; // Snabb spring-anim
+
+          // Ben (svarta) - Animerade om han rör sig
+          ctx.fillStyle = "#000";
+          if (isMoving && runAnim === 0) {
+            // Spring position 1
+            ctx.fillRect(x + p, y - p, p * 2, p * 4);
+            ctx.fillRect(x + p * 5, y, p * 2, p * 3);
+          } else if (isMoving && runAnim === 1) {
+            // Spring position 2
+            ctx.fillRect(x + p, y, p * 2, p * 3);
+            ctx.fillRect(x + p * 5, y - p, p * 2, p * 4);
+          } else {
+            // Står still
+            ctx.fillRect(x + p, y, p * 2, p * 3);
+            ctx.fillRect(x + p * 5, y, p * 2, p * 3);
+          }
+
+          // Kropp (Blå väst, vit t-shirt)
+          ctx.fillStyle = "#fff"; // T-shirt
+          ctx.fillRect(x, y - p * 6, p * 8, p * 6);
+          ctx.fillStyle = "#3498db"; // Väst
+          ctx.fillRect(x, y - p * 6, p * 2, p * 6); // Vänster sida
+          ctx.fillRect(x + p * 6, y - p * 6, p * 2, p * 6); // Höger sida
+
+          // Huvud (Hudfärg)
+          ctx.fillStyle = "#ffccaa";
+          ctx.fillRect(x + p, y - p * 10, p * 6, p * 4);
+
+          // Keps (Röd, bakochfram)
+          ctx.fillStyle = "#e74c3c";
+          ctx.fillRect(x + p, y - p * 11, p * 6, p * 1); // Topp
+          ctx.fillRect(x + p * 6, y - p * 10, p * 2, p * 2); // Skärm bakåt
+
+          // Armar (Kastar animation)
+          ctx.fillStyle = "#ffccaa";
+          if (options.throwing > 0) {
+            // Kastar (armen utsträckt framåt/vänster)
+            ctx.fillRect(x - p * 4, y - p * 5, p * 5, p * 2);
+          } else {
+            // Står still (armen ner)
+            ctx.fillRect(x + p * 2, y - p * 2, p * 4, p * 4);
+          }
+        } else if (type === "customer") {
+          const color = options.color || "#e74c3c";
+          const frame = Math.floor(Date.now() / 200) % 2;
+
+          ctx.fillStyle = "#111";
+          if (frame === 0) {
+            ctx.fillRect(x + p, y, p * 2, p * 3);
+            ctx.fillRect(x + p * 5, y, p * 2, p * 3);
+          } else {
+            ctx.fillRect(x, y, p * 2, p * 3);
+            ctx.fillRect(x + p * 4, y, p * 2, p * 3);
+          }
+
+          ctx.fillStyle = color;
+          ctx.fillRect(x, y - p * 6, p * 8, p * 6);
+          ctx.fillStyle = "rgba(0,0,0,0.2)";
+          ctx.fillRect(x, y - p * 4, p * 8, p * 1);
+
+          ctx.fillStyle = "#ffeebb";
+          ctx.fillRect(x + p, y - p * 10, p * 6, p * 4);
+
+          ctx.fillStyle = "#555";
+          if (color === "#f1c40f") ctx.fillStyle = "#e67e22";
+          if (color === "#2ecc71") ctx.fillStyle = "#000";
+
+          ctx.fillRect(x + p, y - p * 11, p * 6, p * 2);
+          ctx.fillRect(x + p, y - p * 10, p * 1, p * 3);
+
+          ctx.fillStyle = "#000";
+          ctx.fillRect(x + p * 2, y - p * 8, p * 4, p * 1);
+        } else if (type === "tape") {
+          ctx.fillStyle = "#111";
+          ctx.fillRect(x, y - 20, 24, 14);
+          ctx.fillStyle = "#ddd";
+          ctx.fillRect(x + 2, y - 18, 14, 10);
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(x + 4, y - 16, 4, 4);
+          ctx.fillRect(x + 10, y - 16, 4, 4);
+        } else if (type === "shelf") {
+          // Bakgrunden (Hyllan) ritas separat i draw()-loopen nu
+          // Här ritar vi bara böckerna
+          const bookWidth = 6;
+          const bookGap = 2;
+
+          for (let i = 0; i < 640; i += bookWidth + bookGap) {
+            const seed = (x + i + y) * 123;
+            const r = Math.floor((Math.sin(seed) + 1) * 128);
+            const g = Math.floor((Math.cos(seed) + 1) * 128);
+            const b = Math.floor((Math.sin(seed * 2) + 1) * 128);
+
+            ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+            ctx.fillRect(x + i, y - 20, bookWidth, 20);
+
+            ctx.fillStyle = "rgba(0,0,0,0.3)";
+            ctx.fillRect(x + i + bookWidth - 1, y - 20, 1, 20);
+          }
+        }
+      }
+
+      // NY FUNKTION: Rita tegelvägg
+      function drawBrickWall(ctx) {
+        ctx.fillStyle = "#2c0e0e"; // Mörk röd/brun bakgrund
+        ctx.fillRect(0, 0, 640, 480);
+
+        ctx.fillStyle = "#3e1a1a"; // Ljusare tegel
+        const brickW = 40;
+        const brickH = 20;
+
+        for (let row = 0; row < 24; row++) {
+          const offset = (row % 2) * (brickW / 2);
+          for (let col = -1; col < 17; col++) {
+            // Rita tegelsten med lite mellanrum (fog)
+            ctx.fillRect(
+              col * brickW + offset + 2,
+              row * brickH + 2,
+              brickW - 4,
+              brickH - 4
+            );
+          }
+        }
+      }
+
+      // NY FUNKTION: Rita flimrande TV
+      function drawTV(ctx, x, y) {
+        // TV Ram
+        ctx.fillStyle = "#111";
+        ctx.fillRect(x, y, 60, 50);
+        ctx.fillStyle = "#444"; // Hölje
+        ctx.fillRect(x + 2, y + 2, 56, 46);
+
+        // Skärm
+        ctx.fillStyle = "#000";
+        ctx.fillRect(x + 4, y + 4, 44, 42); // Utrymme för knappar till höger
+
+        // Knappar
+        ctx.fillStyle = "#222";
+        ctx.fillRect(x + 50, y + 8, 6, 6);
+        ctx.fillRect(x + 50, y + 18, 6, 6);
+
+        // Flimmer (Static noise)
+        for (let i = 0; i < 50; i++) {
+          const nx = x + 4 + Math.random() * 44;
+          const ny = y + 4 + Math.random() * 42;
+          const shade = Math.random() * 255;
+          ctx.fillStyle = `rgba(${shade},${shade},${shade}, 0.8)`;
+          ctx.fillRect(nx, ny, 2, 2);
+        }
+
+        // Reflexion i glaset
+        ctx.fillStyle = "rgba(255,255,255,0.1)";
+        ctx.beginPath();
+        ctx.moveTo(x + 4, y + 4);
+        ctx.lineTo(x + 20, y + 4);
+        ctx.lineTo(x + 4, y + 20);
+        ctx.fill();
+      }
+
+      // NY FUNKTION: Skapa poängtext
+      function spawnScore(x, y, text) {
+        scoreFloaters.push({
+          x: x,
+          y: y,
+          text: text,
+          life: 60, // Hur länge den syns
+        });
+      }
+
+      function playSound(type) {
+        if (audioCtx.state === "suspended") audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        if (type === "throw") {
+          osc.type = "square";
+          osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(
+            100,
+            audioCtx.currentTime + 0.1
+          );
+          gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.1);
+        } else if (type === "hit") {
+          osc.type = "sawtooth";
+          osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+          osc.frequency.linearRampToValueAtTime(
+            600,
+            audioCtx.currentTime + 0.1
+          );
+          gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.1);
+        } else if (type === "crash") {
+          osc.type = "sawtooth";
+          osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+          osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.3);
+          gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.3);
+        }
+      }
+
+      function spawnCustomer() {
+        const lane = Math.floor(Math.random() * LANES);
+        const customersInLane = customers.filter((c) => c.lane === lane).length;
+        if (customersInLane > 2) return;
+
+        const colors = ["#e74c3c", "#2ecc71", "#f1c40f", "#9b59b6"];
+        customers.push({
+          lane: lane,
+          x: 20,
+          speed: (0.5 + Math.random() * 0.5) * difficultyMultiplier,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          pushedBack: 0,
+        });
+      }
+
+      function createExplosion(x, y) {
+        for (let i = 0; i < 5; i++) {
+          particles.push({
+            x: x,
+            y: y - 25,
+            vx: (Math.random() - 0.5) * 4,
+            vy: (Math.random() - 0.5) * 4,
+            life: 20,
+            color: "#fff",
+          });
+        }
+      }
+
+      function update() {
+        if (isGameOver) return;
+        frameCount++;
+
+        difficultyMultiplier = baseDifficulty + score / 500;
+
+        let spawnRate = Math.max(40, 180 / baseDifficulty - score / 10);
+        if (frameCount % Math.floor(spawnRate) === 0) {
+          spawnCustomer();
+        }
+
+        // SPELAR-RÖRELSE (Interpolering)
+        // Flytta visualLane mjukt mot lane
+        const speed = 0.2; // Hur snabbt han springer mellan raderna
+        const diff = player.lane - player.visualLane;
+
+        if (Math.abs(diff) > 0.05) {
+          player.visualLane += Math.sign(diff) * speed;
+          player.isMoving = true;
+        } else {
+          player.visualLane = player.lane;
+          player.isMoving = false;
+        }
+
+        if (player.cooldown > 0) player.cooldown--;
+        if (player.throwAnim > 0) player.throwAnim--;
+
+        for (let i = tapes.length - 1; i >= 0; i--) {
+          let t = tapes[i];
+          t.x -= 6;
+
+          if (t.x < 10) {
+            tapes.splice(i, 1);
+            lives--;
+            playSound("crash");
+            createExplosion(20, LANE_START_Y + t.lane * LANE_HEIGHT + 40);
+            checkGameOver();
+          }
+        }
+
+        for (let i = customers.length - 1; i >= 0; i--) {
+          let c = customers[i];
+
+          if (c.pushedBack > 0) {
+            c.x -= 6;
+            c.pushedBack -= 6;
+
+            if (c.x < -20) {
+              customers.splice(i, 1);
+              score += 50;
+              spawnScore(20, LANE_START_Y + c.lane * LANE_HEIGHT + 20, "50"); // Visa poäng
+              continue;
+            }
+          } else {
+            c.x += c.speed;
+          }
+
+          if (c.x > TAP_X - 20) {
+            lives = 0;
+            checkGameOver();
+          }
+        }
+
+        tapes.forEach((t, tIndex) => {
+          customers.forEach((c, cIndex) => {
+            if (t.lane === c.lane && !t.dead) {
+              if (t.x < c.x + 20 && t.x > c.x - 10) {
+                if (c.pushedBack > 0) {
+                  t.dead = true;
+                  playSound("hit");
+                  createExplosion(
+                    c.x,
+                    LANE_START_Y + c.lane * LANE_HEIGHT + 40
+                  );
+                } else {
+                  playSound("hit");
+                  t.dead = true;
+
+                  c.pushedBack = c.x + 100;
+
+                  score += 10;
+                  spawnScore(c.x, LANE_START_Y + c.lane * LANE_HEIGHT, "10"); // Visa poäng
+                  createExplosion(
+                    c.x,
+                    LANE_START_Y + c.lane * LANE_HEIGHT + 40
+                  );
+                }
+              }
+            }
+          });
+        });
+
+        tapes = tapes.filter((t) => !t.dead);
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+          let p = particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.life--;
+          if (p.life <= 0) particles.splice(i, 1);
+        }
+
+        // Uppdatera score floaters
+        for (let i = scoreFloaters.length - 1; i >= 0; i--) {
+          let sf = scoreFloaters[i];
+          sf.y -= 1; // Flyt uppåt
+          sf.life--;
+          if (sf.life <= 0) scoreFloaters.splice(i, 1);
+        }
+
+        updateUI();
+      }
+
+      function draw() {
+        // Rita tegelvägg bakom allt
+        drawBrickWall(ctx);
+
+        // Rita golv
+        for (let r = 0; r < 8; r++) {
+          for (let c = 0; c < 10; c++) {
+            ctx.fillStyle = (r + c) % 2 === 0 ? "#2c3e50" : "#34495e";
+            ctx.fillRect(c * 64, r * 60, 64, 60);
+          }
+        }
+
+        // Rita Affisch
+        ctx.fillStyle = "#222";
+        ctx.fillRect(0, 0, 640, 80);
+
+        ctx.fillStyle = "#ffd700";
+        ctx.fillRect(198, 18, 244, 54);
+        ctx.fillStyle = "#000";
+        ctx.fillRect(200, 20, 240, 50);
+
+        ctx.fillStyle = "#e74c3c";
+        ctx.font = '10px "Press Start 2P"';
+        ctx.fillText("NETFLIX", 290, 40);
+        ctx.fillStyle = "#fff";
+        ctx.fillText("COMING SOON...", 270, 55);
+
+        // Rita TV
+        drawTV(ctx, 500, 15);
+
+        // Rita banor
+        for (let i = 0; i < LANES; i++) {
+          const y = LANE_START_Y + i * LANE_HEIGHT;
+
+          // Hylla med mörkare bakgrund (skugga mot väggen)
+          ctx.fillStyle = "rgba(0,0,0,0.5)";
+          ctx.fillRect(0, y - 35, 640, 20);
+          drawSprite(ctx, "shelf", 0, y - 35);
+
+          // Bänken
+          ctx.fillStyle = "#9b59b6";
+          ctx.fillRect(0, y, 640, 4);
+          ctx.fillStyle = "#8e44ad";
+          ctx.fillRect(0, y + 4, 640, 8);
+
+          // Disken
+          ctx.fillStyle = "#f39c12";
+          ctx.fillRect(TAP_X, y, 12, 40);
+          ctx.fillStyle = "#000";
+          ctx.fillRect(TAP_X + 2, y + 10, 8, 20);
+
+          // Dörren - EXIT
+          ctx.fillStyle = "#444";
+          ctx.fillRect(0, y - 50, 25, 60);
+          ctx.fillStyle = "#111";
+          ctx.fillRect(2, y - 48, 21, 58);
+
+          // EXIT Skylt (Neon) - Flyttad något för att synas bättre
+          const blink = Math.floor(Date.now() / 500) % 2 === 0;
+          ctx.fillStyle = blink ? "#00ff00" : "#003300";
+          ctx.fillRect(2, y - 60, 21, 10);
+
+          ctx.fillStyle = blink ? "#fff" : "#888";
+          ctx.font = "8px monospace";
+          ctx.fillText("UT", 6, y - 52);
+        }
+
+        customers.sort((a, b) => a.lane - b.lane);
+        customers.forEach((c) => {
+          const y = LANE_START_Y + c.lane * LANE_HEIGHT + 40;
+          drawSprite(ctx, "customer", c.x, y, { color: c.color });
+        });
+
+        tapes.forEach((t) => {
+          const y = LANE_START_Y + t.lane * LANE_HEIGHT + 40;
+          drawSprite(ctx, "tape", t.x, y);
+        });
+
+        // Rita Spelare baserat på visualLane (mjuk rörelse)
+        const playerY = LANE_START_Y + player.visualLane * LANE_HEIGHT + 40;
+        drawSprite(ctx, "player", PLAYER_X, playerY, {
+          throwing: player.throwAnim,
+          isMoving: player.isMoving,
+        });
+
+        particles.forEach((p) => {
+          ctx.fillStyle = p.color;
+          ctx.fillRect(p.x, p.y, 4, 4);
+        });
+
+        // Rita score floaters
+        scoreFloaters.forEach((sf) => {
+          ctx.fillStyle = "#fff";
+          ctx.font = '10px "Press Start 2P"';
+          ctx.fillText(sf.text, sf.x, sf.y);
+        });
+      }
+
+      function checkGameOver() {
+        if (lives <= 0) {
+          isGameOver = true;
+          lives = 0;
+          updateUI();
+          finalScoreEl.innerText = "SLUTPOÄNG: " + score;
+          gameOverScreen.style.display = "flex";
+          playSound("crash");
+
+          // Återgå automatiskt till titelskärmen efter 15 sekunder
+          if (gameOverTimeout) clearTimeout(gameOverTimeout);
+          gameOverTimeout = setTimeout(goToTitle, 15000);
+        }
+      }
+
+      function updateUI() {
+        scoreEl.innerText = "POÄNG: " + score;
+        let heartStr = "";
+        for (let i = 0; i < lives; i++) heartStr += " [VHS]";
+        livesEl.innerText = "LIV:" + heartStr;
+      }
+
+      function movePlayer(dir) {
+        if (isGameOver) return;
+
+        // Spara gammal lane
+        const oldLane = player.lane;
+
+        player.lane += dir;
+        if (player.lane < 0) player.lane = 0;
+        if (player.lane >= LANES) player.lane = LANES - 1;
+
+        // Om vi faktiskt bytte lane, spela inte ljudet än (valfritt)
+        // Men vi låter logiken i update() sköta animeringen
+      }
+
+      function throwTape() {
+        if (isGameOver) return;
+        // Tillåt bara kast om vi är någorlunda stilla (på rätt rad)
+        if (player.isMoving) return;
+
+        if (player.cooldown > 0) return;
+
+        player.cooldown = 15;
+        player.throwAnim = 10;
+        playSound("throw");
+
+        tapes.push({
+          lane: player.lane,
+          x: PLAYER_X - 10,
+          dead: false,
+        });
+      }
+
+      window.startGame = function (mode) {
+        startScreen.style.display = "none";
+
+        // Rensa eventuell gammal timer om man startar om snabbt
+        if (gameOverTimeout) clearTimeout(gameOverTimeout);
+
+        if (mode === "hard") {
+          baseDifficulty = 1.5;
+        } else {
+          baseDifficulty = 1.0;
+        }
+
+        resetGameVars();
+        gameLoop();
+      };
+
+      window.goToTitle = function () {
+        // Rensa timern om man klickar manuellt innan 15 sekunder gått
+        if (gameOverTimeout) clearTimeout(gameOverTimeout);
+
+        gameOverScreen.style.display = "none";
+        startScreen.style.display = "flex";
+      };
+
+      function resetGameVars() {
+        score = 0;
+        lives = 3;
+        isGameOver = false;
+        customers = [];
+        tapes = [];
+        player.lane = 1;
+        player.visualLane = 1; // Återställ visuell position
+        player.isMoving = false;
+        frameCount = 0;
+        scoreFloaters = [];
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume();
+        }
+      }
+
+      function gameLoop() {
+        if (!isGameOver) {
+          update();
+          draw();
+          gameLoopId = requestAnimationFrame(gameLoop);
+        }
+      }
+
+      window.addEventListener("keydown", (e) => {
+        if (e.code === "ArrowUp") movePlayer(-1);
+        if (e.code === "ArrowDown") movePlayer(1);
+        if (e.code === "Space") throwTape();
+      });
+
+      document.getElementById("btn-up").addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        movePlayer(-1);
+      });
+      document
+        .getElementById("btn-down")
+        .addEventListener("touchstart", (e) => {
+          e.preventDefault();
+          movePlayer(1);
+        });
+      document
+        .getElementById("btn-throw")
+        .addEventListener("touchstart", (e) => {
+          e.preventDefault();
+          throwTape();
+        });
+
+      draw();
+    </script>
+  </body>
+</html>
