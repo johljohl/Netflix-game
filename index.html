@@ -16,8 +16,8 @@
         --nes-white: #ffffff;
         --nes-red: #ff0000;
         --nes-blue: #2c3e50;
-        --nes-gold: #eebb55; /* Wild Gunman Gold */
-        --nes-menu-blue: #66ccff; /* Wild Gunman Menu Blue */
+        --nes-gold: #eebb55;
+        --nes-menu-blue: #66ccff;
       }
 
       body {
@@ -33,23 +33,19 @@
         color: var(--nes-white);
         font-family: "Press Start 2P", cursive;
         overflow: hidden;
-        touch-action: none; /* Förhindra scroll/zoom på mobil */
+        touch-action: none;
       }
 
-      /* Huvudcontainer för spelet */
       #game-container {
         position: relative;
         box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
         border: none;
-
-        /* Grundläggande desktop-storlek */
         height: 80vh;
         aspect-ratio: 4/3;
         max-width: 95vw;
-        transition: transform 0.1s; /* För screen shake */
+        transition: transform 0.1s;
       }
 
-      /* Screen shake klass */
       .shake {
         animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
       }
@@ -113,12 +109,11 @@
         z-index: 20;
         text-shadow: 2px 2px #000;
         font-size: 14px;
-        pointer-events: none; /* Låt klick gå igenom UI */
+        pointer-events: none;
       }
 
-      /* --- KONTROLLER --- */
       #controls {
-        display: none; /* Dölj på desktop som standard */
+        display: none;
         box-sizing: border-box;
         z-index: 100;
       }
@@ -151,7 +146,7 @@
       }
 
       .btn-action {
-        background: #e74c3c; /* Röd knapp */
+        background: #e74c3c;
         border-color: #c0392b;
         width: 90px;
         height: 90px;
@@ -162,19 +157,14 @@
         font-size: 14px;
       }
 
-      /* --- MEDIA QUERIES FÖR RESPONSIVITET --- */
-
-      /* Surfplattor & Mobiler (Visa kontroller) */
       @media (max-width: 1024px), (hover: none) {
         #controls {
           display: flex;
         }
       }
 
-      /* Mobil Porträtt (Stående) */
       @media (orientation: portrait) and (max-width: 1024px) {
         body {
-          /* Använd space-between för att trycka ner kontroller och centrera spelet i restytan */
           justify-content: space-between;
           padding-top: 0;
           padding-bottom: 0;
@@ -184,46 +174,33 @@
           width: 95vw;
           height: auto;
           aspect-ratio: 4/3;
-          max-height: 50vh; /* Begränsa höjden så det inte krockar med kontroller */
-
-          /* Centrera spelet vertikalt i det övre utrymmet */
+          max-height: 50vh;
           margin-top: auto;
           margin-bottom: auto;
         }
 
         #controls {
           width: 100%;
-          /* Ge kontrollerna ett dedikerat utrymme i botten */
           height: 35vh;
           min-height: 200px;
-
-          /* Tryck ner innehållet mot botten */
           padding: 20px 30px 40px 30px;
-
           flex-direction: row;
-          justify-content: space-between; /* Sprid ut knapparna till kanterna */
-          align-items: flex-end; /* Placera knapparna långt ner */
-
-          background: linear-gradient(
-            to top,
-            rgba(0, 0, 0, 0.8),
-            transparent
-          ); /* Svag toning för att markera kontrollytan */
-          flex-shrink: 0; /* Låt inte detta område krympa */
+          justify-content: space-between;
+          align-items: flex-end;
+          background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+          flex-shrink: 0;
         }
 
-        /* Justera layout för knapparna i porträtt */
         .d-pad {
           flex-direction: column;
           gap: 20px;
-          margin-bottom: 20px; /* Lyft upp lite från den absoluta bottenkanten */
+          margin-bottom: 20px;
         }
 
         .btn-action {
-          margin-bottom: 30px; /* Justera så den linjerar snyggt med pilarna */
+          margin-bottom: 30px;
         }
 
-        /* FIX: Copyright ligger nu snyggt under menyn istället för att flyta i botten */
         .copyright {
           position: relative !important;
           bottom: auto !important;
@@ -232,19 +209,17 @@
         }
       }
 
-      /* Mobil Landskap (Liggande) - "Game Boy" Style */
       @media (orientation: landscape) and (max-height: 800px) {
         body {
-          flex-direction: row; /* Sätt saker bredvid varandra */
+          flex-direction: row;
           justify-content: center;
           align-items: center;
         }
 
         #game-container {
-          height: 90vh; /* Fyll höjden */
+          height: 90vh;
           width: auto;
           aspect-ratio: 4/3;
-          /* Se till att den inte täcker hela bredden så kontrollerna får plats */
           max-width: 65vw;
         }
 
@@ -254,16 +229,15 @@
           left: 0;
           width: 100%;
           height: 100%;
-          pointer-events: none; /* Låt klick gå igenom tomma ytor */
-
-          justify-content: space-between; /* Sprid ut knapparna */
-          align-items: flex-end; /* Lägg dem i botten */
-          padding: 20px 5vw; /* Marginal från kanten */
+          pointer-events: none;
+          justify-content: space-between;
+          align-items: flex-end;
+          padding: 20px 5vw;
         }
 
         .d-pad,
         .btn-action {
-          pointer-events: auto; /* Aktivera knapparna */
+          pointer-events: auto;
         }
 
         .d-pad {
@@ -273,8 +247,6 @@
           margin-bottom: 40px;
         }
       }
-
-      /* --- UI STYLING --- */
 
       #start-screen,
       #game-over-screen {
@@ -287,18 +259,17 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center; /* Centrera bättre på mobil */
-        padding-top: 0; /* Ta bort top padding för bättre centrering */
+        justify-content: center;
+        padding-top: 0;
         z-index: 30;
         text-align: center;
         box-sizing: border-box;
       }
 
-      /* Top Score style - Matchar Wild Gunman */
       #start-top-score {
-        color: #ffffff; /* Vit text som i originalet */
+        color: #ffffff;
         font-size: 2.2vh;
-        margin-top: 5vh; /* Lite mer avstånd från menyn */
+        margin-top: 5vh;
         margin-bottom: 2vh;
         text-shadow: 2px 2px #000;
         text-transform: uppercase;
@@ -306,7 +277,7 @@
 
       h1 {
         color: #eebb55;
-        font-size: 3.5vh; /* Responsiv textstorlek */
+        font-size: 3.5vh;
         line-height: 1.4;
         margin-bottom: 4vh;
         text-shadow: 4px 4px 0px #8b4513, 6px 6px 0px #000;
@@ -332,7 +303,7 @@
 
       .menu-item {
         font-size: 2.2vh;
-        color: var(--nes-menu-blue); /* Wild Gunman ljusblå */
+        color: var(--nes-menu-blue);
         margin-bottom: 2vh;
         padding: 10px;
         cursor: pointer;
@@ -346,7 +317,7 @@
       }
 
       .menu-item.selected {
-        color: #ffffff; /* Vit när vald (eller gul om man vill) */
+        color: #ffffff;
       }
 
       .copyright {
@@ -354,7 +325,7 @@
         bottom: 20px;
         width: 100%;
         text-align: center;
-        color: var(--nes-gold); /* Guld/Beige som i Wild Gunman */
+        color: var(--nes-gold);
         font-size: 10px;
         text-shadow: 2px 2px #000;
       }
@@ -406,7 +377,7 @@
         cursor: pointer;
         font-size: 2.5vh;
         margin-top: 20px;
-        padding: 20px; /* Större klickyta */
+        padding: 20px;
       }
 
       @keyframes blinker {
@@ -433,14 +404,12 @@
       </div>
 
       <div id="start-screen">
-        <!-- Tog bort Top Score härifrån toppen -->
         <h1>
           <span class="title-netflix">NETFLIX KILLED</span><br />
           <span class="title-blockbuster">THE VIDEOSTORE</span>
         </h1>
 
         <div id="menu-container">
-          <!-- Lade till ontouchstart för snabb respons på mobil -->
           <div
             class="menu-item selected"
             onclick="startGame('normal')"
@@ -461,7 +430,6 @@
           </div>
         </div>
 
-        <!-- Flyttade Top Score hit -->
         <div id="start-top-score">TOP SCORE - 0</div>
 
         <div class="copyright">&copy;1984 VIDEOSTORE</div>
@@ -471,7 +439,6 @@
         <h1 style="color: #888">BUTIKEN STÄNGD</h1>
         <p id="final-score">SLUTPOÄNG: 0</p>
         <p style="color: #e74c3c">STREAMING TOG ÖVER...</p>
-        <!-- Lade till ontouchstart här med -->
         <div class="blink" onclick="goToTitle()" ontouchstart="goToTitle()">
           TILL TITELSKÄRM
         </div>
@@ -487,9 +454,6 @@
     </div>
 
     <script>
-      /**
-       * SPELMOTOR & LOGIK
-       */
       const canvas = document.getElementById("gameCanvas");
       const ctx = canvas.getContext("2d");
       const scoreEl = document.getElementById("score-display");
@@ -501,17 +465,9 @@
       const finalScoreEl = document.getElementById("final-score");
       const gameContainer = document.getElementById("game-container");
 
-      // Koppla globala funktioner till window för att undvika scope-problem
-      window.selectMenu = function (element) {
-        document
-          .querySelectorAll(".menu-item")
-          .forEach((el) => el.classList.remove("selected"));
-        element.classList.add("selected");
-      };
-
       const LANES = 4;
-      const LANE_HEIGHT = 85; // Lite tajtare mellan raderna
-      const LANE_START_Y = 130; // Flyttade NER allt för att ge plats åt skylten (var 100)
+      const LANE_HEIGHT = 85;
+      const LANE_START_Y = 130;
       const PLAYER_X = 550;
       const TAP_X = 510;
 
@@ -524,9 +480,13 @@
       let gameSpeed = 1;
       let difficultyMultiplier = 1;
       let baseDifficulty = 1;
-      let gameOverTimeout; // Variabel för timern
+      let gameOverTimeout;
 
-      // Combo system
+      // Attract Mode Variabler
+      let isAttractMode = false;
+      let attractTimer;
+      let aiCooldown = 0;
+
       let comboCount = 0;
       let lastHitTime = 0;
 
@@ -534,76 +494,100 @@
       const audioCtx = new AudioContext();
 
       let player = {
-        lane: 1, // Nuvarande logiska lane
-        visualLane: 1, // För animering (float)
+        lane: 1,
+        visualLane: 1,
         cooldown: 0,
         throwAnim: 0,
-        isMoving: false, // Håller koll på om vi springer
+        isMoving: false,
       };
 
       let customers = [];
       let tapes = [];
       let particles = [];
-      let scoreFloaters = []; // NYTT: Flytande poängtexter
+      let scoreFloaters = [];
 
-      // Visa highscore direkt vid start både i UI och på startskärmen
       highScoreEl.innerText = "HI: " + highScore;
       startTopScoreEl.innerText = "TOP SCORE - " + highScore;
 
-      // Enkla sprites
+      // DEFINIERA FUNKTIONER SOM VANLIGA FUNKTIONER FÖRST (HOISTING)
+
+      function selectMenu(element) {
+        document
+          .querySelectorAll(".menu-item")
+          .forEach((el) => el.classList.remove("selected"));
+        element.classList.add("selected");
+      }
+
+      function startGame(mode) {
+        if (isAttractMode) interruptAttractMode();
+        if (attractTimer) clearTimeout(attractTimer);
+
+        startScreen.style.display = "none";
+
+        if (gameOverTimeout) clearTimeout(gameOverTimeout);
+
+        if (mode === "hard") {
+          baseDifficulty = 1.5;
+        } else {
+          baseDifficulty = 1.0;
+        }
+
+        resetGameVars();
+        gameLoop();
+      }
+
+      function goToTitle() {
+        if (gameOverTimeout) clearTimeout(gameOverTimeout);
+
+        gameOverScreen.style.display = "none";
+        startScreen.style.display = "flex";
+        startTopScoreEl.innerText = "TOP SCORE - " + highScore;
+
+        // Återstarta attract timer
+        startAttractTimer();
+      }
+
       function drawSprite(ctx, type, x, y, options = {}) {
         const p = 4;
 
         if (type === "player") {
-          // SKUGGA (Nytt: Fäster spelaren vid golvet)
           ctx.fillStyle = "rgba(0,0,0,0.5)";
           ctx.beginPath();
           ctx.ellipse(x + p * 4, y + p * 3, p * 6, p * 2, 0, 0, Math.PI * 2);
           ctx.fill();
 
-          // --- BITRÄDET (CLERK) ---
           const isMoving = options.isMoving;
-          const runAnim = Math.floor(Date.now() / 100) % 2; // Snabb spring-anim
+          const runAnim = Math.floor(Date.now() / 100) % 2;
 
-          // Ben (svarta) - Animerade om han rör sig
           ctx.fillStyle = "#000";
           if (isMoving && runAnim === 0) {
-            // Spring position 1
             ctx.fillRect(x + p, y - p, p * 2, p * 4);
             ctx.fillRect(x + p * 5, y, p * 2, p * 3);
           } else if (isMoving && runAnim === 1) {
-            // Spring position 2
             ctx.fillRect(x + p, y, p * 2, p * 3);
             ctx.fillRect(x + p * 5, y - p, p * 2, p * 4);
           } else {
-            // Står still
             ctx.fillRect(x + p, y, p * 2, p * 3);
             ctx.fillRect(x + p * 5, y, p * 2, p * 3);
           }
 
-          // Kropp (Blå väst, vit t-shirt)
-          ctx.fillStyle = "#fff"; // T-shirt
+          ctx.fillStyle = "#fff";
           ctx.fillRect(x, y - p * 6, p * 8, p * 6);
-          ctx.fillStyle = "#3498db"; // Väst
-          ctx.fillRect(x, y - p * 6, p * 2, p * 6); // Vänster sida
-          ctx.fillRect(x + p * 6, y - p * 6, p * 2, p * 6); // Höger sida
+          ctx.fillStyle = "#3498db";
+          ctx.fillRect(x, y - p * 6, p * 2, p * 6);
+          ctx.fillRect(x + p * 6, y - p * 6, p * 2, p * 6);
 
-          // Huvud (Hudfärg)
           ctx.fillStyle = "#ffccaa";
           ctx.fillRect(x + p, y - p * 10, p * 6, p * 4);
 
-          // Keps (Röd, bakochfram)
           ctx.fillStyle = "#e74c3c";
-          ctx.fillRect(x + p, y - p * 11, p * 6, p * 1); // Topp
-          ctx.fillRect(x + p * 6, y - p * 10, p * 2, p * 2); // Skärm bakåt
+          ctx.fillRect(x + p, y - p * 11, p * 6, p * 1);
+          ctx.fillRect(x + p * 6, y - p * 10, p * 2, p * 2);
 
-          // Armar (Kastar animation)
           ctx.fillStyle = "#ffccaa";
           if (options.throwing > 0) {
-            // Kastar (armen utsträckt framåt/vänster)
             ctx.fillRect(x - p * 4, y - p * 5, p * 5, p * 2);
           } else {
-            // Står still (armen ner)
             ctx.fillRect(x + p * 2, y - p * 2, p * 4, p * 4);
           }
         } else if (type === "customer") {
@@ -645,8 +629,6 @@
           ctx.fillRect(x + 4, y - 16, 4, 4);
           ctx.fillRect(x + 10, y - 16, 4, 4);
         } else if (type === "shelf") {
-          // Bakgrunden (Hyllan) ritas separat i draw()-loopen nu
-          // Här ritar vi bara böckerna
           const bookWidth = 6;
           const bookGap = 2;
 
@@ -665,19 +647,17 @@
         }
       }
 
-      // NY FUNKTION: Rita tegelvägg
       function drawBrickWall(ctx) {
-        ctx.fillStyle = "#2c0e0e"; // Mörk röd/brun bakgrund
+        ctx.fillStyle = "#2c0e0e";
         ctx.fillRect(0, 0, 640, 480);
 
-        ctx.fillStyle = "#3e1a1a"; // Ljusare tegel
+        ctx.fillStyle = "#3e1a1a";
         const brickW = 40;
         const brickH = 20;
 
         for (let row = 0; row < 24; row++) {
           const offset = (row % 2) * (brickW / 2);
           for (let col = -1; col < 17; col++) {
-            // Rita tegelsten med lite mellanrum (fog)
             ctx.fillRect(
               col * brickW + offset + 2,
               row * brickH + 2,
@@ -688,24 +668,19 @@
         }
       }
 
-      // NY FUNKTION: Rita flimrande TV
       function drawTV(ctx, x, y) {
-        // TV Ram
         ctx.fillStyle = "#111";
         ctx.fillRect(x, y, 60, 50);
-        ctx.fillStyle = "#444"; // Hölje
+        ctx.fillStyle = "#444";
         ctx.fillRect(x + 2, y + 2, 56, 46);
 
-        // Skärm
         ctx.fillStyle = "#000";
-        ctx.fillRect(x + 4, y + 4, 44, 42); // Utrymme för knappar till höger
+        ctx.fillRect(x + 4, y + 4, 44, 42);
 
-        // Knappar
         ctx.fillStyle = "#222";
         ctx.fillRect(x + 50, y + 8, 6, 6);
         ctx.fillRect(x + 50, y + 18, 6, 6);
 
-        // Flimmer (Static noise)
         for (let i = 0; i < 50; i++) {
           const nx = x + 4 + Math.random() * 44;
           const ny = y + 4 + Math.random() * 42;
@@ -714,7 +689,6 @@
           ctx.fillRect(nx, ny, 2, 2);
         }
 
-        // Reflexion i glaset
         ctx.fillStyle = "rgba(255,255,255,0.1)";
         ctx.beginPath();
         ctx.moveTo(x + 4, y + 4);
@@ -723,18 +697,21 @@
         ctx.fill();
       }
 
-      // NY FUNKTION: Skapa poängtext
       function spawnScore(x, y, text) {
         scoreFloaters.push({
           x: x,
           y: y,
           text: text,
-          life: 60, // Hur länge den syns
+          life: 60,
         });
       }
 
       function playSound(type) {
-        if (audioCtx.state === "suspended") audioCtx.resume();
+        if (isAttractMode || audioCtx.state === "suspended") {
+          if (!isAttractMode) audioCtx.resume();
+          if (isAttractMode) return;
+        }
+
         const osc = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
         osc.connect(gainNode);
@@ -752,7 +729,6 @@
           osc.stop(audioCtx.currentTime + 0.1);
         } else if (type === "hit") {
           osc.type = "sawtooth";
-          // Högre pitch om combo är hög
           const pitch = 200 + comboCount * 50;
           osc.frequency.setValueAtTime(pitch, audioCtx.currentTime);
           osc.frequency.linearRampToValueAtTime(
@@ -772,8 +748,8 @@
         }
       }
 
-      // Screen Shake Funktion
       function shakeScreen() {
+        if (isAttractMode) return;
         gameContainer.classList.add("shake");
         setTimeout(() => {
           gameContainer.classList.remove("shake");
@@ -808,9 +784,58 @@
         }
       }
 
+      function startAttractTimer() {
+        if (attractTimer) clearTimeout(attractTimer);
+        attractTimer = setTimeout(startAttractMode, 5000);
+      }
+
+      function startAttractMode() {
+        isAttractMode = true;
+        startScreen.style.display = "none";
+        resetGameVars();
+        gameLoop();
+      }
+
+      function interruptAttractMode() {
+        if (isAttractMode) {
+          isAttractMode = false;
+          isGameOver = true; // Stoppa loopen
+          cancelAnimationFrame(gameLoopId);
+          goToTitle();
+        }
+      }
+
       function update() {
         if (isGameOver) return;
         frameCount++;
+
+        if (isAttractMode) {
+          if (aiCooldown > 0) aiCooldown--;
+
+          let targetCustomer = null;
+          let maxX = -1;
+
+          customers.forEach((c) => {
+            if (c.pushedBack <= 0 && c.x > maxX) {
+              maxX = c.x;
+              targetCustomer = c;
+            }
+          });
+
+          if (targetCustomer) {
+            if (player.lane < targetCustomer.lane && aiCooldown === 0) {
+              player.lane++;
+              aiCooldown = 10;
+            } else if (player.lane > targetCustomer.lane && aiCooldown === 0) {
+              player.lane--;
+              aiCooldown = 10;
+            } else if (player.lane === targetCustomer.lane) {
+              if (Math.random() < 0.1 && player.cooldown === 0) {
+                throwTape();
+              }
+            }
+          }
+        }
 
         difficultyMultiplier = baseDifficulty + score / 500;
 
@@ -819,14 +844,11 @@
           spawnCustomer();
         }
 
-        // Återställ combo om det går för lång tid
         if (Date.now() - lastHitTime > 2000) {
           comboCount = 0;
         }
 
-        // SPELAR-RÖRELSE (Interpolering)
-        // Flytta visualLane mjukt mot lane
-        const speed = 0.2; // Hur snabbt han springer mellan raderna
+        const speed = 0.2;
         const diff = player.lane - player.visualLane;
 
         if (Math.abs(diff) > 0.05) {
@@ -846,12 +868,14 @@
 
           if (t.x < 10) {
             tapes.splice(i, 1);
-            lives--;
-            comboCount = 0; // Reset combo vid miss
-            shakeScreen(); // Skaka skärmen vid miss
-            playSound("crash");
+            if (!isAttractMode) {
+              lives--;
+              comboCount = 0;
+              shakeScreen();
+              playSound("crash");
+              checkGameOver();
+            }
             createExplosion(20, LANE_START_Y + t.lane * LANE_HEIGHT + 40);
-            checkGameOver();
           }
         }
 
@@ -865,7 +889,7 @@
             if (c.x < -20) {
               customers.splice(i, 1);
               score += 50;
-              spawnScore(20, LANE_START_Y + c.lane * LANE_HEIGHT + 20, "50"); // Visa poäng
+              spawnScore(20, LANE_START_Y + c.lane * LANE_HEIGHT + 20, "50");
               continue;
             }
           } else {
@@ -873,9 +897,14 @@
           }
 
           if (c.x > TAP_X - 20) {
-            lives = 0;
-            shakeScreen(); // Skaka skärmen vid game over
-            checkGameOver();
+            if (isAttractMode) {
+              isGameOver = true;
+              goToTitle();
+            } else {
+              lives = 0;
+              shakeScreen();
+              checkGameOver();
+            }
           }
         }
 
@@ -896,7 +925,6 @@
 
                   c.pushedBack = c.x + 100;
 
-                  // Combo Logic
                   comboCount++;
                   lastHitTime = Date.now();
                   let comboBonus = comboCount > 1 ? comboCount * 10 : 0;
@@ -932,10 +960,9 @@
           if (p.life <= 0) particles.splice(i, 1);
         }
 
-        // Uppdatera score floaters
         for (let i = scoreFloaters.length - 1; i >= 0; i--) {
           let sf = scoreFloaters[i];
-          sf.y -= 1; // Flyt uppåt
+          sf.y -= 1;
           sf.life--;
           if (sf.life <= 0) scoreFloaters.splice(i, 1);
         }
@@ -943,12 +970,9 @@
         updateUI();
       }
 
-      // Återställ draw-funktionen
       function draw() {
-        // Rita tegelvägg bakom allt
         drawBrickWall(ctx);
 
-        // Rita golv
         for (let r = 0; r < 8; r++) {
           for (let c = 0; c < 10; c++) {
             ctx.fillStyle = (r + c) % 2 === 0 ? "#2c3e50" : "#34495e";
@@ -956,7 +980,6 @@
           }
         }
 
-        // Rita Affisch
         ctx.fillStyle = "#222";
         ctx.fillRect(0, 0, 640, 80);
 
@@ -971,37 +994,30 @@
         ctx.fillStyle = "#fff";
         ctx.fillText("COMING SOON...", 270, 55);
 
-        // Rita TV
         drawTV(ctx, 500, 15);
 
-        // Rita banor
         for (let i = 0; i < LANES; i++) {
           const y = LANE_START_Y + i * LANE_HEIGHT;
 
-          // Hylla med mörkare bakgrund (skugga mot väggen)
           ctx.fillStyle = "rgba(0,0,0,0.5)";
           ctx.fillRect(0, y - 35, 640, 20);
           drawSprite(ctx, "shelf", 0, y - 35);
 
-          // Bänken
           ctx.fillStyle = "#9b59b6";
           ctx.fillRect(0, y, 640, 4);
           ctx.fillStyle = "#8e44ad";
           ctx.fillRect(0, y + 4, 640, 8);
 
-          // Disken
           ctx.fillStyle = "#f39c12";
           ctx.fillRect(TAP_X, y, 12, 40);
           ctx.fillStyle = "#000";
           ctx.fillRect(TAP_X + 2, y + 10, 8, 20);
 
-          // Dörren - EXIT
           ctx.fillStyle = "#444";
           ctx.fillRect(0, y - 50, 25, 60);
           ctx.fillStyle = "#111";
           ctx.fillRect(2, y - 48, 21, 58);
 
-          // EXIT Skylt (Neon) - Flyttad något för att synas bättre
           const blink = Math.floor(Date.now() / 500) % 2 === 0;
           ctx.fillStyle = blink ? "#00ff00" : "#003300";
           ctx.fillRect(2, y - 60, 21, 10);
@@ -1022,7 +1038,6 @@
           drawSprite(ctx, "tape", t.x, y);
         });
 
-        // Rita Spelare baserat på visualLane (mjuk rörelse)
         const playerY = LANE_START_Y + player.visualLane * LANE_HEIGHT + 40;
         drawSprite(ctx, "player", PLAYER_X, playerY, {
           throwing: player.throwAnim,
@@ -1034,12 +1049,23 @@
           ctx.fillRect(p.x, p.y, 4, 4);
         });
 
-        // Rita score floaters
         scoreFloaters.forEach((sf) => {
           ctx.fillStyle = "#fff";
           ctx.font = '10px "Press Start 2P"';
           ctx.fillText(sf.text, sf.x, sf.y);
         });
+
+        if (isAttractMode) {
+          const blink = Math.floor(Date.now() / 800) % 2 === 0;
+          if (blink) {
+            ctx.fillStyle = "#ffffff";
+            ctx.font = '20px "Press Start 2P"';
+            ctx.fillText("DEMO PLAY", 240, 240);
+            ctx.strokeStyle = "#000";
+            ctx.lineWidth = 2;
+            ctx.strokeText("DEMO PLAY", 240, 240);
+          }
+        }
       }
 
       function checkGameOver() {
@@ -1047,7 +1073,6 @@
           isGameOver = true;
           lives = 0;
 
-          // Uppdatera High Score
           if (score > highScore) {
             highScore = score;
             localStorage.setItem("vhs_highscore", highScore);
@@ -1058,7 +1083,6 @@
           gameOverScreen.style.display = "flex";
           playSound("crash");
 
-          // Återgå automatiskt till titelskärmen efter 15 sekunder
           if (gameOverTimeout) clearTimeout(gameOverTimeout);
           gameOverTimeout = setTimeout(goToTitle, 15000);
         }
@@ -1073,22 +1097,37 @@
       }
 
       function movePlayer(dir) {
+        if (isAttractMode) {
+          interruptAttractMode();
+          return;
+        }
         if (isGameOver) return;
 
-        // Spara gammal lane
         const oldLane = player.lane;
-
         player.lane += dir;
         if (player.lane < 0) player.lane = 0;
         if (player.lane >= LANES) player.lane = LANES - 1;
-
-        // Om vi faktiskt bytte lane, spela inte ljudet än (valfritt)
-        // Men vi låter logiken i update() sköta animeringen
       }
 
       function throwTape() {
+        if (isAttractMode && !isGameOver) {
+          player.cooldown = 15;
+          player.throwAnim = 10;
+          playSound("throw");
+          tapes.push({
+            lane: player.lane,
+            x: PLAYER_X - 10,
+            dead: false,
+          });
+          return;
+        }
+
+        if (isAttractMode) {
+          interruptAttractMode();
+          return;
+        }
+
         if (isGameOver) return;
-        // Tillåt bara kast om vi är någorlunda stilla (på rätt rad)
         if (player.isMoving) return;
 
         if (player.cooldown > 0) return;
@@ -1104,32 +1143,6 @@
         });
       }
 
-      window.startGame = function (mode) {
-        startScreen.style.display = "none";
-
-        // Rensa eventuell gammal timer om man startar om snabbt
-        if (gameOverTimeout) clearTimeout(gameOverTimeout);
-
-        if (mode === "hard") {
-          baseDifficulty = 1.5;
-        } else {
-          baseDifficulty = 1.0;
-        }
-
-        resetGameVars();
-        gameLoop();
-      };
-
-      window.goToTitle = function () {
-        // Rensa timern om man klickar manuellt innan 15 sekunder gått
-        if (gameOverTimeout) clearTimeout(gameOverTimeout);
-
-        gameOverScreen.style.display = "none";
-        startScreen.style.display = "flex";
-        // Uppdatera high score visning på menyn också om man vill
-        startTopScoreEl.innerText = "TOP SCORE - " + highScore;
-      };
-
       function resetGameVars() {
         score = 0;
         lives = 3;
@@ -1138,11 +1151,13 @@
         customers = [];
         tapes = [];
         player.lane = 1;
-        player.visualLane = 1; // Återställ visuell position
+        player.visualLane = 1;
         player.isMoving = false;
         frameCount = 0;
         scoreFloaters = [];
-        if (audioCtx.state === "suspended") {
+        aiCooldown = 0;
+
+        if (!isAttractMode && audioCtx.state === "suspended") {
           audioCtx.resume();
         }
       }
@@ -1156,6 +1171,10 @@
       }
 
       window.addEventListener("keydown", (e) => {
+        if (isAttractMode) {
+          interruptAttractMode();
+          return;
+        }
         if (e.code === "ArrowUp") movePlayer(-1);
         if (e.code === "ArrowDown") movePlayer(1);
         if (e.code === "Space") throwTape();
@@ -1163,22 +1182,44 @@
 
       document.getElementById("btn-up").addEventListener("touchstart", (e) => {
         e.preventDefault();
+        if (isAttractMode) {
+          interruptAttractMode();
+          return;
+        }
         movePlayer(-1);
       });
       document
         .getElementById("btn-down")
         .addEventListener("touchstart", (e) => {
           e.preventDefault();
+          if (isAttractMode) {
+            interruptAttractMode();
+            return;
+          }
           movePlayer(1);
         });
       document
         .getElementById("btn-throw")
         .addEventListener("touchstart", (e) => {
           e.preventDefault();
+          if (isAttractMode) {
+            interruptAttractMode();
+            return;
+          }
           throwTape();
         });
 
+      document.body.addEventListener("click", (e) => {
+        if (isAttractMode) interruptAttractMode();
+      });
+
+      // KOPPLA FUNKTIONER TILL WINDOW PÅ SLUTET FÖR ATT VARA SÄKER
+      window.selectMenu = selectMenu;
+      window.startGame = startGame;
+      window.goToTitle = goToTitle;
+
       draw();
+      startAttractTimer(); // Se till att timern startar vid laddning
     </script>
   </body>
 </html>
