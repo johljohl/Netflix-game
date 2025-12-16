@@ -73,6 +73,24 @@
         flex-direction: column;
       }
 
+      /* FEVER MODE EFFECT */
+      #display-area.fever {
+        border-color: #ff00ff;
+        box-shadow: 0 0 30px #ff00ff;
+        animation: borderPulse 0.5s infinite alternate;
+      }
+
+      @keyframes borderPulse {
+        from {
+          border-color: #ff00ff;
+          box-shadow: 0 0 20px #ff00ff;
+        }
+        to {
+          border-color: #00ffff;
+          box-shadow: 0 0 40px #00ffff;
+        }
+      }
+
       #ui-layer {
         position: absolute;
         top: 10px;
@@ -260,7 +278,6 @@
           flex-direction: column;
           padding: 10px 0;
           position: relative;
-          /* Flyttade Start/Select upp */
           justify-content: flex-start;
           gap: 20px;
         }
@@ -271,16 +288,14 @@
           justify-content: space-between;
           align-items: center;
           padding: 0 10px;
-          /* Ta bort margin-bottom här eftersom vi flyttar start/select upp */
-          order: 2; /* Flytta ner i flex-ordningen */
-          margin-top: auto; /* Tryck ner mot botten */
+          order: 2;
+          margin-top: auto;
           margin-bottom: 20px;
         }
 
         .brand-text {
           display: block;
           position: absolute;
-          /* Flytta brand text lite mer ur vägen */
           bottom: 10px;
           left: 20px;
           font-family: sans-serif;
@@ -400,10 +415,9 @@
           width: 100%;
           justify-content: center;
           gap: 30px;
-          /* Flytta upp i flex-ordningen */
           order: 1;
           margin-top: 10px;
-          margin-bottom: auto; /* Tryck upp mot toppen av control-arean */
+          margin-bottom: auto;
         }
         .capsule-btn-wrapper {
           display: flex;
@@ -451,10 +465,16 @@
           width: 100%;
           text-align: center;
         }
+        .credits {
+          position: static !important;
+          font-size: 1.8vmin !important;
+          margin-top: 3vh !important;
+          color: #ccc;
+        }
         .copyright {
           position: static !important;
           font-size: 1.8vmin !important;
-          margin-top: 2vh !important;
+          margin-top: 0.5vh !important;
         }
         .cursor-icon {
           width: 2vmin !important;
@@ -594,9 +614,18 @@
       .menu-item.selected {
         color: #ffffff;
       }
+      .credits {
+        position: absolute;
+        bottom: 35px;
+        width: 100%;
+        text-align: center;
+        color: #ccc;
+        font-size: 10px;
+        text-shadow: 2px 2px #000;
+      }
       .copyright {
         position: absolute;
-        bottom: 20px;
+        bottom: 15px;
         width: 100%;
         text-align: center;
         color: var(--nes-gold);
@@ -652,6 +681,14 @@
       }
       #level-display {
         color: #fff;
+        text-shadow: 1px 1px 0 #000;
+      }
+      /* Rank text på Game Over */
+      #rank-display {
+        color: #eebb55;
+        font-size: 1.5vh;
+        margin-top: 10px;
+        text-transform: uppercase;
         text-shadow: 1px 1px 0 #000;
       }
 
@@ -750,6 +787,7 @@
             <div id="game-over-screen" style="display: none">
               <h1 style="color: #888">BUTIKEN STÄNGD</h1>
               <p id="final-score">SLUTPOÄNG: 0</p>
+              <div id="rank-display">RANK: PRAKTIKANT</div>
               <p style="color: #e74c3c">STREAMING TOG ÖVER...</p>
               <div
                 class="blink"
@@ -857,6 +895,7 @@
       const startScreen = document.getElementById("start-screen");
       const gameOverScreen = document.getElementById("game-over-screen");
       const finalScoreEl = document.getElementById("final-score");
+      const rankDisplayEl = document.getElementById("rank-display");
       const gameContainer = document.getElementById("game-container");
       const displayArea = document.getElementById("display-area");
       const uiLayer = document.getElementById("ui-layer");
@@ -892,7 +931,22 @@
 
       let comboCount = 0;
       let lastHitTime = 0;
+      let feverMode = false; // NEW FEVER VAR
       let currentMenuSelection = "normal";
+
+      // Ranks
+      const RANKS = [
+        { score: 0, title: "PRAKTIKANT" },
+        { score: 500, title: "BUTIKSBITRÄDE" },
+        { score: 1500, title: "SKIFTLEDARE" },
+        { score: 3000, title: "BUTIKSCHEF" },
+        { score: 5000, title: "REGIONALCHEF" },
+        { score: 10000, title: "VD FÖR BLOCKBUSTER" },
+      ];
+
+      // Power-up Variabler
+      let powerups = [];
+      let rapidFireTimer = 0;
 
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       const audioCtx = new AudioContext();
@@ -930,16 +984,20 @@
         lives = 3;
         level = 1;
         comboCount = 0;
+        feverMode = false;
+        displayArea.classList.remove("fever"); // Reset fever visual
         isGameOver = false;
         isLevelTransition = false;
         customers = [];
         tapes = [];
+        powerups = []; // Reset powerups
         player.lane = 1;
         player.visualLane = 1;
         player.isMoving = false;
         frameCount = 0;
         scoreFloaters = [];
         aiCooldown = 0;
+        rapidFireTimer = 0; // Reset Rapid Fire
         if (!isAttractMode && audioCtx.state === "suspended") audioCtx.resume();
       }
 
@@ -1020,6 +1078,7 @@
         toggleUI(false);
         isGameRunning = false;
         startTopScoreEl.innerText = "TOP SCORE - " + highScore;
+        displayArea.classList.remove("fever"); // Clear fever
         startAttractTimer();
         draw(); // Rita en frame så vi ser titeln
       }
@@ -1054,10 +1113,54 @@
           player.cooldown > 0
         )
           return;
-        player.cooldown = 15;
+
+        // RAPID FIRE LOGIC
+        const coolDownTime = rapidFireTimer > 0 ? 5 : 15;
+        player.cooldown = coolDownTime;
+
         player.throwAnim = 10;
         playSound("throw");
         tapes.push({ lane: player.lane, x: PLAYER_X - 10, dead: false });
+      }
+
+      // POWER UP FUNCTIONS
+      function spawnPowerup() {
+        const lane = Math.floor(Math.random() * LANES);
+        // Random type: 70% Rewind, 30% Rapid Fire
+        const type = Math.random() < 0.7 ? "rewind" : "rapid";
+
+        powerups.push({
+          lane: lane,
+          x: 20, // Start from left
+          type: type,
+          dead: false,
+        });
+      }
+
+      function activateRewind() {
+        playSound("levelup"); // Use nice sound
+        shakeScreen();
+        spawnScore(320, 240, "REWIND!");
+
+        customers.forEach((c) => {
+          c.pushedBack = c.x + 100; // Push back significantly
+        });
+      }
+
+      function activateRapidFire() {
+        playSound("levelup");
+        spawnScore(320, 240, "TURBO MODE!");
+        rapidFireTimer = 300; // 5 seconds at 60fps
+      }
+
+      function calculateRank(finalScore) {
+        let rankTitle = RANKS[0].title;
+        for (let r of RANKS) {
+          if (finalScore >= r.score) {
+            rankTitle = r.title;
+          }
+        }
+        return rankTitle;
       }
 
       function drawSprite(ctx, type, x, y, options = {}) {
@@ -1120,6 +1223,38 @@
           ctx.fillRect(x + p, y - p * 10, p * 1, p * 3);
           ctx.fillStyle = "#000";
           ctx.fillRect(x + p * 2, y - p * 8, p * 4, p * 1);
+        } else if (type === "powerup") {
+          const isRewind = options.subType === "rewind";
+          // Simple visual representation
+          ctx.fillStyle = isRewind ? "#3498db" : "#e74c3c"; // Blue or Red
+
+          // Draw boxy shape
+          ctx.fillRect(x, y - 20, 20, 20);
+
+          // Icon inside
+          ctx.fillStyle = "#fff";
+          if (isRewind) {
+            // Draw <<
+            ctx.beginPath();
+            ctx.moveTo(x + 15, y - 18);
+            ctx.lineTo(x + 5, y - 10);
+            ctx.lineTo(x + 15, y - 2);
+            ctx.fill();
+            // Double arrow look
+            ctx.beginPath();
+            ctx.moveTo(x + 10, y - 18);
+            ctx.lineTo(x + 0, y - 10);
+            ctx.lineTo(x + 10, y - 2);
+            ctx.fill();
+          } else {
+            // Draw Lightning/Can shape
+            ctx.fillRect(x + 5, y - 15, 10, 10);
+          }
+
+          // Glow
+          ctx.strokeStyle = "#fff";
+          ctx.lineWidth = 1;
+          ctx.strokeRect(x - 1, y - 21, 22, 22);
         } else if (type === "tape") {
           if (level === 1) {
             // --- VHS KASSETT (NIVÅ 1) ---
@@ -1130,8 +1265,8 @@
             ctx.fillStyle = "#fff";
             ctx.fillRect(x + 4, y - 16, 4, 4);
             ctx.fillRect(x + 10, y - 16, 4, 4);
-          } else {
-            // --- DVD SKIVA (NIVÅ 2+) ---
+          } else if (level === 2) {
+            // --- DVD SKIVA (NIVÅ 2) ---
             const centerX = x + 12;
             const centerY = y - 13;
 
@@ -1147,15 +1282,42 @@
             ctx.arc(centerX, centerY, 11, 0, Math.PI * 2);
             ctx.fill();
 
-            // Etikett runt hålet (Cyan för lvl 2, Gul för lvl 3)
-            ctx.fillStyle =
-              level === 2 ? "rgba(0, 255, 255, 0.5)" : "rgba(200, 255, 0, 0.5)";
+            // Etikett runt hålet (Cyan för lvl 2)
+            ctx.fillStyle = "rgba(0, 255, 255, 0.5)";
             ctx.beginPath();
             ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
             ctx.fill();
 
             // Hålet i mitten
-            ctx.fillStyle = "#222"; // Mörk färg för hålet
+            ctx.fillStyle = "#222";
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 2, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            // --- BLU-RAY SKIVA (NIVÅ 3) ---
+            const centerX = x + 12;
+            const centerY = y - 13;
+
+            // Blu-ray Blue Gradient
+            const grad = ctx.createLinearGradient(x, y - 26, x + 24, y);
+            grad.addColorStop(0, "#00a");
+            grad.addColorStop(0.5, "#44f");
+            grad.addColorStop(1, "#008");
+            ctx.fillStyle = grad;
+
+            // Skiva
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 11, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Etikett runt hålet (Mörkare blå)
+            ctx.fillStyle = "rgba(0, 0, 100, 0.5)";
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Hålet i mitten
+            ctx.fillStyle = "#222";
             ctx.beginPath();
             ctx.arc(centerX, centerY, 2, 0, Math.PI * 2);
             ctx.fill();
@@ -1310,13 +1472,19 @@
 
       function createExplosion(x, y) {
         for (let i = 0; i < 5; i++) {
+          // Enhanced colorful particles for fever
+          let pColor = "#fff";
+          if (feverMode) {
+            const colors = ["#0ff", "#f0f", "#ff0", "#fff"];
+            pColor = colors[Math.floor(Math.random() * colors.length)];
+          }
           particles.push({
             x: x,
             y: y - 25,
             vx: (Math.random() - 0.5) * 4,
             vy: (Math.random() - 0.5) * 4,
             life: 20,
-            color: "#fff",
+            color: pColor,
           });
         }
       }
@@ -1341,6 +1509,11 @@
             highScore = score;
             localStorage.setItem("vhs_highscore", highScore);
           }
+
+          // Get rank
+          const rank = calculateRank(score);
+          rankDisplayEl.innerText = "RANK: " + rank;
+
           updateUI();
           finalScoreEl.innerText = "SLUTPOÄNG: " + score;
           gameOverScreen.style.display = "flex";
@@ -1357,6 +1530,10 @@
         let heartStr = "";
         for (let i = 0; i < lives; i++) heartStr += " [VHS]";
         livesEl.innerText = "LIV:" + heartStr;
+
+        // Visual indicator for fever in UI
+        if (feverMode) scoreEl.style.color = "#0ff";
+        else scoreEl.style.color = "#fff";
       }
 
       function update() {
@@ -1403,7 +1580,12 @@
         let spawnRate = Math.max(40, 180 / baseDifficulty - score / 10);
         if (frameCount % Math.floor(spawnRate) === 0) spawnCustomer();
 
-        if (Date.now() - lastHitTime > 2000) comboCount = 0;
+        // Reset combo if too much time passes
+        if (Date.now() - lastHitTime > 2000) {
+          comboCount = 0;
+          feverMode = false;
+          displayArea.classList.remove("fever");
+        }
 
         const speed = 0.2;
         const diff = player.lane - player.visualLane;
@@ -1424,13 +1606,29 @@
           if (t.x < 10) {
             tapes.splice(i, 1);
             if (!isAttractMode) {
-              lives--;
-              comboCount = 0;
-              shakeScreen();
-              playSound("crash");
-              checkGameOver();
+              // --- FIX: Only lose life if NOT in turbo mode ---
+              if (rapidFireTimer <= 0) {
+                lives--;
+                comboCount = 0; // Reset on miss
+                feverMode = false;
+                displayArea.classList.remove("fever");
+                shakeScreen();
+                playSound("crash");
+                checkGameOver();
+              }
+              // --- END FIX ---
             }
             createExplosion(20, LANE_START_Y + t.lane * LANE_HEIGHT + 40);
+          }
+        }
+
+        // Update Powerups Movement
+        for (let i = powerups.length - 1; i >= 0; i--) {
+          let p = powerups[i];
+          p.x += 1; // Move slowly to right
+          // If reach right side (counter), just disappear
+          if (p.x > 500) {
+            powerups.splice(i, 1);
           }
         }
 
@@ -1461,6 +1659,7 @@
         }
 
         tapes.forEach((t) => {
+          // Collision with Customers
           customers.forEach((c) => {
             if (t.lane === c.lane && !t.dead) {
               if (t.x < c.x + 20 && t.x > c.x - 10) {
@@ -1477,11 +1676,20 @@
                   c.pushedBack = c.x + 100;
                   comboCount++;
                   lastHitTime = Date.now();
+
+                  // Score logic
+                  let points = 10;
+                  // Combo bonus
                   let comboBonus = comboCount > 1 ? comboCount * 10 : 0;
-                  score += 10 + comboBonus;
-                  let scoreText =
-                    "10" +
-                    (comboBonus > 0 ? " +" + comboBonus + " COMBO!" : "");
+                  points += comboBonus;
+                  // Fever multiplier
+                  if (feverMode) points *= 2;
+
+                  score += points;
+                  let scoreText = points.toString();
+                  if (feverMode) scoreText += " FEVER!";
+                  else if (comboBonus > 0) scoreText += " COMBO!";
+
                   spawnScore(
                     c.x,
                     LANE_START_Y + c.lane * LANE_HEIGHT,
@@ -1492,6 +1700,22 @@
                     LANE_START_Y + c.lane * LANE_HEIGHT + 40
                   );
                 }
+              }
+            }
+          });
+
+          // Collision with Powerups
+          powerups.forEach((p, pIndex) => {
+            if (t.lane === p.lane && !t.dead && !p.dead) {
+              if (t.x < p.x + 20 && t.x > p.x - 10) {
+                t.dead = true;
+                p.dead = true;
+                // Activate Effect!
+                if (p.type === "rewind") activateRewind();
+                else if (p.type === "rapid") activateRapidFire();
+
+                createExplosion(p.x, LANE_START_Y + p.lane * LANE_HEIGHT + 40);
+                powerups.splice(pIndex, 1);
               }
             }
           });
@@ -1594,6 +1818,13 @@
           const y = LANE_START_Y + c.lane * LANE_HEIGHT + 40;
           drawSprite(ctx, "customer", c.x, y, { color: c.color });
         });
+
+        // Draw Powerups
+        powerups.forEach((p) => {
+          const y = LANE_START_Y + p.lane * LANE_HEIGHT + 40;
+          drawSprite(ctx, "powerup", p.x, y, { subType: p.type });
+        });
+
         tapes.forEach((t) => {
           const y = LANE_START_Y + t.lane * LANE_HEIGHT + 40;
           drawSprite(ctx, "tape", t.x, y);
