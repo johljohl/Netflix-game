@@ -465,16 +465,10 @@
           width: 100%;
           text-align: center;
         }
-        .credits {
-          position: static !important;
-          font-size: 1.8vmin !important;
-          margin-top: 3vh !important;
-          color: #ccc;
-        }
         .copyright {
           position: static !important;
           font-size: 1.8vmin !important;
-          margin-top: 0.5vh !important;
+          margin-top: 2vh !important;
         }
         .cursor-icon {
           width: 2vmin !important;
@@ -614,18 +608,9 @@
       .menu-item.selected {
         color: #ffffff;
       }
-      .credits {
-        position: absolute;
-        bottom: 35px;
-        width: 100%;
-        text-align: center;
-        color: #ccc;
-        font-size: 10px;
-        text-shadow: 2px 2px #000;
-      }
       .copyright {
         position: absolute;
-        bottom: 15px;
+        bottom: 20px;
         width: 100%;
         text-align: center;
         color: var(--nes-gold);
@@ -1470,21 +1455,27 @@
         });
       }
 
-      function createExplosion(x, y) {
-        for (let i = 0; i < 5; i++) {
-          // Enhanced colorful particles for fever
+      function createExplosion(x, y, color) {
+        // More juice particles with colors!
+        const count = feverMode ? 20 : 10;
+        for (let i = 0; i < count; i++) {
           let pColor = "#fff";
           if (feverMode) {
             const colors = ["#0ff", "#f0f", "#ff0", "#fff"];
             pColor = colors[Math.floor(Math.random() * colors.length)];
+          } else if (color) {
+            // Use customer color or slightly lighter/darker
+            pColor = color;
           }
+
           particles.push({
             x: x,
             y: y - 25,
-            vx: (Math.random() - 0.5) * 4,
-            vy: (Math.random() - 0.5) * 4,
-            life: 20,
+            vx: (Math.random() - 0.5) * 10,
+            vy: (Math.random() - 0.5) * 10,
+            life: 30,
             color: pColor,
+            size: Math.random() * 4 + 2,
           });
         }
       }
@@ -1547,6 +1538,27 @@
         }
 
         frameCount++;
+
+        // RAPID FIRE TIMER
+        if (rapidFireTimer > 0) {
+          rapidFireTimer--;
+        }
+
+        // SPAWN POWERUPS - lowered chance, only level 2+
+        if (level >= 2 && Math.random() < 0.002) {
+          spawnPowerup();
+        }
+
+        // CHECK FEVER MODE
+        if (comboCount >= 5 && !feverMode) {
+          feverMode = true;
+          displayArea.classList.add("fever");
+          playSound("levelup"); // Sound cue
+          spawnScore(320, 240, "FEVER MODE!");
+        } else if (comboCount < 5 && feverMode) {
+          feverMode = false;
+          displayArea.classList.remove("fever");
+        }
 
         if (isAttractMode) {
           if (aiCooldown > 0) aiCooldown--;
@@ -1668,7 +1680,8 @@
                   playSound("hit");
                   createExplosion(
                     c.x,
-                    LANE_START_Y + c.lane * LANE_HEIGHT + 40
+                    LANE_START_Y + c.lane * LANE_HEIGHT + 40,
+                    c.color
                   );
                 } else {
                   playSound("hit");
@@ -1697,8 +1710,10 @@
                   );
                   createExplosion(
                     c.x,
-                    LANE_START_Y + c.lane * LANE_HEIGHT + 40
+                    LANE_START_Y + c.lane * LANE_HEIGHT + 40,
+                    c.color
                   );
+                  // Hit shake effect for extra juice - REMOVED per request
                 }
               }
             }
