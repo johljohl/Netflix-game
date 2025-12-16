@@ -1121,13 +1121,45 @@
           ctx.fillStyle = "#000";
           ctx.fillRect(x + p * 2, y - p * 8, p * 4, p * 1);
         } else if (type === "tape") {
-          ctx.fillStyle = "#111";
-          ctx.fillRect(x, y - 20, 24, 14);
-          ctx.fillStyle = "#ddd";
-          ctx.fillRect(x + 2, y - 18, 14, 10);
-          ctx.fillStyle = "#fff";
-          ctx.fillRect(x + 4, y - 16, 4, 4);
-          ctx.fillRect(x + 10, y - 16, 4, 4);
+          if (level === 1) {
+            // --- VHS KASSETT (NIVÅ 1) ---
+            ctx.fillStyle = "#111";
+            ctx.fillRect(x, y - 20, 24, 14);
+            ctx.fillStyle = "#ddd";
+            ctx.fillRect(x + 2, y - 18, 14, 10);
+            ctx.fillStyle = "#fff";
+            ctx.fillRect(x + 4, y - 16, 4, 4);
+            ctx.fillRect(x + 10, y - 16, 4, 4);
+          } else {
+            // --- DVD SKIVA (NIVÅ 2+) ---
+            const centerX = x + 12;
+            const centerY = y - 13;
+
+            // DVD Silver Gradient
+            const grad = ctx.createLinearGradient(x, y - 26, x + 24, y);
+            grad.addColorStop(0, "#ccc");
+            grad.addColorStop(0.5, "#fff");
+            grad.addColorStop(1, "#999");
+            ctx.fillStyle = grad;
+
+            // Skiva
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 11, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Etikett runt hålet (Cyan för lvl 2, Gul för lvl 3)
+            ctx.fillStyle =
+              level === 2 ? "rgba(0, 255, 255, 0.5)" : "rgba(200, 255, 0, 0.5)";
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Hålet i mitten
+            ctx.fillStyle = "#222"; // Mörk färg för hålet
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
         } else if (type === "shelf") {
           const bookWidth = 6;
           const bookGap = 2;
@@ -1147,18 +1179,22 @@
       function drawBrickWall(ctx) {
         let bgColor = "#2c0e0e";
         let brickColor = "#3e1a1a";
+
         if (level === 2) {
-          bgColor = "#1a1a3e";
-          brickColor = "#2a2a4e";
+          bgColor = "#050510"; // Mörkare blå/svart för nivå 2
+          brickColor = "#151530"; // Blåaktiga tegelstenar
         } else if (level >= 3) {
-          bgColor = "#1a3e1a";
-          brickColor = "#2a4e2a";
+          bgColor = "#0a150a";
+          brickColor = "#1a351a";
         }
+
         ctx.fillStyle = bgColor;
         ctx.fillRect(0, 0, 640, 480);
+
         ctx.fillStyle = brickColor;
         const brickW = 40;
         const brickH = 20;
+
         for (let row = 0; row < 24; row++) {
           const offset = (row % 2) * (brickW / 2);
           for (let col = -1; col < 17; col++) {
@@ -1480,12 +1516,38 @@
 
       function draw() {
         drawBrickWall(ctx);
+
+        // Bestäm färger baserat på nivå
+        let floorColor1, floorColor2, counterTop, counterSide;
+
+        if (level === 1) {
+          // Level 1: Classic Video Store
+          floorColor1 = "#2c3e50";
+          floorColor2 = "#34495e";
+          counterTop = "#9b59b6";
+          counterSide = "#8e44ad";
+        } else if (level === 2) {
+          // Level 2: Future/Cyber Store
+          floorColor1 = "#222222"; // Mörkgrå
+          floorColor2 = "#333333"; // Ljusare grå
+          counterTop = "#00ffff"; // Neon Cyan
+          counterSide = "#008888"; // Mörkare Cyan
+        } else {
+          // Level 3: Toxic Store
+          floorColor1 = "#0d2b0d"; // Mörkgrön
+          floorColor2 = "#1a351a"; // Ljusare grön
+          counterTop = "#ccff00"; // Giftgul
+          counterSide = "#88aa00"; // Mörkare gul/grön
+        }
+
+        // Rita golv med nivå-färger
         for (let r = 0; r < 8; r++) {
           for (let c = 0; c < 10; c++) {
-            ctx.fillStyle = (r + c) % 2 === 0 ? "#2c3e50" : "#34495e";
+            ctx.fillStyle = (r + c) % 2 === 0 ? floorColor1 : floorColor2;
             ctx.fillRect(c * 64, r * 60, 64, 60);
           }
         }
+
         ctx.fillStyle = "#222";
         ctx.fillRect(0, 0, 640, 80);
         ctx.fillStyle = "#ffd700";
@@ -1504,10 +1566,13 @@
           ctx.fillStyle = "rgba(0,0,0,0.5)";
           ctx.fillRect(0, y - 35, 640, 20);
           drawSprite(ctx, "shelf", 0, y - 35);
-          ctx.fillStyle = "#9b59b6";
+
+          // Rita disk med nivå-färger
+          ctx.fillStyle = counterTop;
           ctx.fillRect(0, y, 640, 4);
-          ctx.fillStyle = "#8e44ad";
+          ctx.fillStyle = counterSide;
           ctx.fillRect(0, y + 4, 640, 8);
+
           ctx.fillStyle = "#f39c12";
           ctx.fillRect(TAP_X, y, 12, 40);
           ctx.fillStyle = "#000";
